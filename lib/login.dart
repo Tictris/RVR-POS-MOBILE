@@ -2,12 +2,12 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:rvr_flutter/dashboard.dart';
-import 'package:rvr_flutter/widgets/login/email_field.dart';
-import 'package:rvr_flutter/widgets/login/password_field.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/http.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class APIService{
+  final storage = const FlutterSecureStorage();
 
   Client client = http.Client();
 
@@ -16,6 +16,14 @@ class APIService{
     'Accept': 'application/json',
     "Access-Control-Allow-Origin": "*"
   };
+
+    Future<void> _storeToken(String newToken) async {
+    try {
+      await storage.write(key: 'authToken', value: newToken);
+    } catch (e) {
+      debugPrint('Error storing token: $e');
+    }
+  }
 
   Future sendFeedback({
 
@@ -35,6 +43,19 @@ class APIService{
     final response =  await client.post(
       uri,headers: headers, body: body
     );
+
+    if (response.statusCode == 200){
+      final data = jsonDecode(response.body);
+      final token = data['token'];
+
+      if(token != null){
+        await _storeToken(token);
+        debugPrint('Token stored successfully.');
+      } else {
+        debugPrint('Token not found in response.');
+      }
+
+    }
 
     debugPrint(response.body.toString());
   }
