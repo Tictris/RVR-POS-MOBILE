@@ -17,7 +17,7 @@ class APIService{
     "Access-Control-Allow-Origin": "*"
   };
 
-    Future<void> _storeToken(String newToken) async {
+  Future<void> _storeToken(String newToken) async {
     try {
       await storage.write(key: 'authToken', value: newToken);
     } catch (e) {
@@ -25,7 +25,7 @@ class APIService{
     }
   }
 
-  Future sendFeedback({
+  Future<bool> sendFeedback(BuildContext context, {
 
     required String email,
     required String password,
@@ -51,13 +51,17 @@ class APIService{
       if(token != null){
         await _storeToken(token);
         debugPrint('Token stored successfully.');
+         debugPrint(response.body.toString());
+        return true;
       } else {
         debugPrint('Token not found in response.');
+        return false;
       }
 
+    } else {
+      return false;
     }
-
-    debugPrint(response.body.toString());
+   
   }
 }
 
@@ -74,8 +78,8 @@ class _LoginState extends State<Login> {
   Widget build(BuildContext context) {
 
     APIService apiService = APIService();
-    final TextEditingController _emailController = TextEditingController();
-    final TextEditingController _passwordController = TextEditingController();
+    final TextEditingController emailController = TextEditingController();
+    final TextEditingController passwordController = TextEditingController();
 
     return Scaffold(
       body: Container(
@@ -106,7 +110,7 @@ class _LoginState extends State<Login> {
                   ),
                 ),
                 TextField(
-                  controller: _emailController,
+                  controller: emailController,
                   decoration: const InputDecoration(
                       border: OutlineInputBorder(),
                       labelText: 'Enter your email address'),
@@ -122,7 +126,7 @@ class _LoginState extends State<Login> {
                 ),
               ),
               TextField(
-                controller: _passwordController,
+                controller: passwordController,
                 obscureText: true,
                 decoration: const InputDecoration(
                     border: OutlineInputBorder(),
@@ -133,9 +137,30 @@ class _LoginState extends State<Login> {
             const SizedBox(
                       height: 20,
                     ),
-            ElevatedButton(onPressed: () {
-              apiService.sendFeedback(email: _emailController.text, password: _passwordController.text);
-            }, child: const Text('Login')),
+            ElevatedButton(
+              onPressed: () async {
+              final email = emailController.text;
+              final password = passwordController.text;
+
+              final loginSuccessful = await apiService.sendFeedback(context, email: email, password: password);
+                    if (loginSuccessful) {
+                      debugPrint("It has worked!");
+                      if(context.mounted){
+                        Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const Dashboard()));
+                      }
+                    } else{
+                      // Handle login failure (e.g., show error message)
+                      if(context.mounted){
+                        ScaffoldMessenger.of(context)
+                        .showSnackBar(const SnackBar(content: Text('Login failed!')));
+                      }
+                    }
+                 },
+            child: const Text('Login')
+            ),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
