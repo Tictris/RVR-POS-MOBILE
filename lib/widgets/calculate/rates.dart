@@ -133,7 +133,7 @@ class CottageRateFetcher {
             if (rate.type == "umbrella"){
               cottageRateData.umbrella = rate.price;
               cottageRateData.umbrellaId = rate.id;
-            } else if(rate.type == "cottage"){
+            } else if(rate.type == "gazebo"){
               cottageRateData.cottage = rate.price;
               cottageRateData.cottageId = rate.id;
             } else if(rate.type == "tent"){

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:rvr_flutter/widgets/entrance/entrance.dart';
+import 'package:rvr_flutter/widgets/provider/form.dart';
+import 'package:provider/provider.dart';
 import 'calculate/rates.dart';
 
 class Calculator extends StatefulWidget {
@@ -10,6 +13,8 @@ class Calculator extends StatefulWidget {
 
 class _CalculatorState extends State<Calculator> {
   final _formKey = GlobalKey<FormState>();
+
+  final TextEditingController _controllerName = TextEditingController();
   
   final TextEditingController _controllerAdult = TextEditingController();
   final TextEditingController _controllerSenior = TextEditingController();
@@ -19,14 +24,44 @@ class _CalculatorState extends State<Calculator> {
   final TextEditingController _controllerCottage = TextEditingController();
   final TextEditingController _controllerTent = TextEditingController();
 
-  double _total = 0;
-  double _adultCost = 0;
-  double _seniorCost = 0;
-  double _childCost = 0;
+  int _total = 0;
+  int _adultCost = 0;
+  int _seniorCost = 0;
+  int _childCost = 0;
   
   int _umbrellaCost = 0;
   int _cottageCost = 0;
   int _tentCost = 0;
+
+
+  Future<void> _submitForm() async{
+    
+  if(_formKey.currentState!.validate()){
+  int adults = int.tryParse(_controllerAdult.text) ?? 0;
+  int seniors = int.tryParse(_controllerSenior.text) ?? 0;
+  int children = int.tryParse(_controllerChild.text) ?? 0;
+  int umbrellas = int.tryParse(_controllerUmbrella.text) ?? 0;
+  int cottages = int.tryParse(_controllerCottage.text) ?? 0;
+  int tents = int.tryParse(_controllerTent.text) ?? 0;
+  String name = _controllerName.text;
+
+  int totalCost = _total;
+
+  APIService apiService = APIService();
+  await apiService.sendData(context, 
+  name: name, 
+  total: totalCost, 
+  adultCount: adults, 
+  seniorCount: seniors, 
+  childCount: children, 
+  umbrellaCount: umbrellas, 
+  cottageCount: cottages, 
+  tentCount: tents);
+  debugPrint("submit form is done");
+  }
+}
+
+
 
   Future<void> calculateSum() async {
 
@@ -43,9 +78,9 @@ class _CalculatorState extends State<Calculator> {
     final cottageRateData = await cottageRateFetcher.fetchRates();
 
     // Access the rates
-    double adultRate = rateData.adultRate;
-    double childRate = rateData.childRate;
-    double seniorRate = rateData.seniorRate;
+    int adultRate = rateData.adultRate as int;
+    int childRate = rateData.childRate as int;
+    int seniorRate = rateData.seniorRate as int;
 
     //Access cottage rates
     int tent = cottageRateData.tent;
@@ -71,21 +106,32 @@ class _CalculatorState extends State<Calculator> {
     debugPrint('Error fetching rates: $e');
   }
     
+
+
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: Column(
-      children: [
-        const Row(
+        body:Form(
+          key: _formKey,
+          child: Column(
+            children: [
+          Row(
           children: [
             Padding(
               padding: EdgeInsets.fromLTRB(40, 20, 0, 0),
               child: SizedBox(
                   width: 300,
                   height: 40,
-                  child: TextField(
+                  child: TextFormField(
+                    controller: _controllerName,
+                    validator: (value){
+                    if (value == null || value.isEmpty) {
+                    return 'Please enter a name';
+                  }
+                  return null;
+                    },
                     decoration: InputDecoration(labelText: "Name"),
                   )),
             ),
@@ -102,10 +148,7 @@ class _CalculatorState extends State<Calculator> {
             ),
           ],
         ),
-        Form(
-          key: _formKey,
-          child: Column(
-            children: [
+
               Row(
           children: [
             Padding(
@@ -298,11 +341,22 @@ class _CalculatorState extends State<Calculator> {
           "$_total",
           style: const TextStyle(fontSize: 40),
         ),
-            ],
-          )
+
+        ElevatedButton(onPressed: () async {
+          await _submitForm();
+
+          _controllerName.clear();
+          _controllerAdult.clear();
+          _controllerSenior.clear();
+          _controllerChild.clear();
+          _controllerUmbrella.clear();
+          _controllerCottage.clear();
+          _controllerTent.clear();
+        },
+          child: const Text("Submit")),
+          ],
         ),
-      ],
-    ),
+      ),
     );
   }
 }

@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/http.dart';
 import 'dart:convert';
 
+
 class APIService{
 
   Client client = http.Client();
@@ -18,20 +19,60 @@ class APIService{
 
     required String name,
     required int total,
+    required int adultCount,
+    required int seniorCount,
+    required int childCount,
+    required int umbrellaCount,
+    required int cottageCount,
+    required int tentCount,
 
   }) async {
     const url = "http://127.0.0.1:8000/api/create-entrance";
 
     Uri uri = Uri.parse(url);
 
+    final rateFetcher = RateFetcher();
+    final rateData = await rateFetcher.fetchRates();
+    final cottageRateFetcher = CottageRateFetcher();
+    final cottageRateData = await cottageRateFetcher.fetchRates();
+
+    int adultId = rateData.adultId;
+    int seniorId = rateData.seniorId;
+    int childId = rateData.childId;
+
+    int umbrellaId = cottageRateData.umbrellaId;
+    int cottageId = cottageRateData.cottageId;
+    int tentId = cottageRateData.tentId;
+
+
     final bc = [
-        { 'cottage_id': '',
-          'quantity': ''}
+        { //umbrella
+          'cottage_id': umbrellaId,
+          'quantity': umbrellaCount,
+        },
+        {//cottage
+          'cottage_id': cottageId,
+          'quantity': cottageCount,
+        },
+        {//tent
+          'cottage_id': tentId,
+          'quantity': tentCount,
+        }
     ];
 
     final cc = [
-        {'customer_id': '',
-         'count': ''}
+        {//adults
+         'customer_id': adultId,
+         'count': adultCount
+        },
+        {//senior
+         'customer_id': seniorId,
+         'count': seniorCount
+        },
+        {//children
+         'customer_id': childId,
+         'count': childCount
+        },
     ];
 
     final body = jsonEncode({
@@ -45,5 +86,10 @@ class APIService{
       uri,headers: headers, body: body
     );
 
+    if(response.statusCode == 201){
+      debugPrint("it has connected uh successfallay");
+    } else {
+      debugPrint("Odd, it returned FALSE");
+    }
   }
 }
